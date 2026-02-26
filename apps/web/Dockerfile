@@ -23,6 +23,9 @@ ENV NODE_ENV=production
 # Generate drizzle migrations
 RUN cd packages/db && bun run db:generate
 
+# Build the migrate script to plain JS so it runs without tsx/bun in the runner
+RUN cd packages/db && bun build scripts/migrate.ts --outdir scripts --target node --external pg
+
 RUN cd apps/web && bun run build
 
 # ---
@@ -38,13 +41,11 @@ COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Copy drizzle migrations, config, and dependencies for runtime migration
+# Copy drizzle migrations and migrate script
 COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle ./packages/db/drizzle
-COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle.config.ts ./packages/db/drizzle.config.ts
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=build --chown=nextjs:nodejs /app/packages/db/scripts/migrate.js ./packages/db/scripts/migrate.js
 COPY --from=build --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --from=build --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/.bin/drizzle-kit ./node_modules/.bin/drizzle-kit
 
 USER nextjs
 
@@ -52,4 +53,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD sh -c "cd /app/packages/db && npx drizzle-kit migrate || echo 'Migration failed, starting server anyway'; cd /app && node apps/web/server.js"
+CMD sh -c "node /app/packages/db/scripts/migrate.js || echo 'Migration failed, starting server anyway'; node apps/web/server.js"
