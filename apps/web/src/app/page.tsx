@@ -1,64 +1,60 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
-        <Image
-          alt="Next.js logo"
-          className="dark:invert"
-          height={20}
-          priority
-          src="/next.svg"
-          width={100}
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs font-semibold text-3xl text-black leading-10 tracking-tight dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+      <main className="flex w-full max-w-lg flex-col items-center gap-8 bg-white px-16 py-32 sm:items-start dark:bg-black">
+        <div className="flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
+          <h1 className="font-semibold text-3xl text-black leading-10 tracking-tight dark:text-zinc-50">
+            Advanced iMessage Kit Webhook
           </h1>
-          <p className="max-w-md text-lg text-zinc-600 leading-8 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-zinc-600 leading-8 dark:text-zinc-400">
+            Create a secure webhook endpoint by providing your server URL and
+            authentication key.
           </p>
         </div>
-        <div className="flex flex-col gap-4 font-medium text-base sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            <Image
-              alt="Vercel logomark"
-              className="dark:invert"
-              height={16}
-              src="/vercel.svg"
-              width={16}
+        <form className="flex w-full flex-col gap-4">
+          <label className="flex flex-col gap-1.5" htmlFor="server-url">
+            <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
+              Server URL
+            </span>
+            <input
+              className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
+              id="server-url"
+              name="serverUrl"
+              placeholder="https://example.com/webhook"
+              type="url"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-black/[.08] border-solid px-5 transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            rel="noopener noreferrer"
-            target="_blank"
+          </label>
+          <label className="flex flex-col gap-1.5" htmlFor="key">
+            <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
+              Key
+            </span>
+            <input
+              className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
+              id="key"
+              name="key"
+              placeholder="your-secret-key"
+              type="text"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5" htmlFor="webhook-url">
+            <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
+              Webhook URL
+            </span>
+            <input
+              className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
+              id="webhook-url"
+              name="webhookUrl"
+              placeholder="https://example.com/hook"
+              type="url"
+            />
+          </label>
+          <button
+            className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-foreground font-medium text-background text-base transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            type="submit"
           >
-            Documentation
-          </a>
-        </div>
+            Config
+          </button>
+        </form>
       </main>
     </div>
   );
