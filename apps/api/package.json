@@ -1,5 +1,5 @@
 {
-  "name": "@turbobun/backend",
+  "name": "@turbobun/api",
   "version": "0.0.1",
   "main": "./src/index.ts",
   "module": "src/index.ts",
