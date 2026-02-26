@@ -38,12 +38,13 @@ COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Copy drizzle migrations, config, and node_modules for runtime migration
+# Copy drizzle migrations, config, and dependencies for runtime migration
 COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle ./packages/db/drizzle
 COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle.config.ts ./packages/db/drizzle.config.ts
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/drizzle-kit ./packages/db/node_modules/drizzle-kit
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./packages/db/node_modules/drizzle-orm
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/pg ./packages/db/node_modules/pg
+COPY --from=build --chown=nextjs:nodejs /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=build --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=build --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
+COPY --from=build --chown=nextjs:nodejs /app/node_modules/.bin/drizzle-kit ./node_modules/.bin/drizzle-kit
 
 USER nextjs
 
