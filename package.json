@@ -1,0 +1,30 @@
+{
+  "name": "@turbobun/monorepo",
+  "private": true,
+  "description": "Example of Turborepo setup with Bun and Biome/OXC.",
+  "packageManager": "bun@1.1.29",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter '*' dev",
+    "build": "concurrently --kill-others -n 'backend,web' -c '#00ccff,#ffcc00' 'bun run --filter ./apps/backend start' 'turbo build'",
+    "clean": "git clean -xdf .turbo node_modules",
+    "check": "ultracite check",
+    "check:case": "bunx --bun case-police",
+    "check:knip": "bunx --bun knip",
+    "check:updates": "bunx npm-check-updates -ui -ws",
+    "format-and-lint": "biome check .",
+    "format-and-lint:fix": "biome check . --write",
+    "typecheck": "bun run --filter '*' typecheck",
+    "fix": "ultracite fix"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.0",
+    "@types/bun": "1.1.10",
+    "concurrently": "9.0.1",
+    "typescript": "5.6.2",
+    "ultracite": "7.2.4"
+  }
+}
