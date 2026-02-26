@@ -18,7 +18,13 @@
         ".env.production",
         ".env"
       ],
-      "outputs": [".next/**", "dist/**", ".velite/**", "!.next/cache/**", "styled-system/**"],
+      "outputs": [
+        ".next/**",
+        "dist/**",
+        ".velite/**",
+        "!.next/cache/**",
+        "styled-system/**"
+      ],
       "dependsOn": ["^build"]
     },
     "dev": {
