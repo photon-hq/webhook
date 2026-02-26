@@ -34,7 +34,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Install drizzle-kit for running migrations at startup
-RUN npm install -g drizzle-kit pg
+RUN npm install -g drizzle-kit drizzle-orm pg
 
 # Leverage Next.js standalone output
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
