@@ -8,7 +8,7 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "@turbobun/eden": "workspace:*",
+    "@turbobun/db": "workspace:*",
     "elysia": "1.1.17"
   },
   "devDependencies": {
