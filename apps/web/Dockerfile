@@ -1,48 +1,41 @@
-ARG NODE_VERSION=24.13.1
-FROM node:${NODE_VERSION}-slim AS base
+FROM oven/bun:1 AS build
 
-# This Dockerfile is copy-pasted into our main docs at /docs/handbook/deploying-with-docker.
-# Make sure you update both files!
-
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-# Set working directory
 WORKDIR /app
 
-# ---
-FROM base AS prepare
-RUN yarn global add turbo
-COPY . .
-# Add lockfile and package.json's of isolated subworkspace
-RUN turbo prune web --docker
+# Cache packages installation
+COPY package.json package.json
+COPY bun.lockb bun.lockb
+
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/eden/package.json ./packages/eden/package.json
+COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
+
+RUN bun install
+
+COPY apps/web ./apps/web
+COPY packages/eden ./packages/eden
+COPY packages/typescript-config ./packages/typescript-config
+
+ENV NODE_ENV=production
+
+RUN cd apps/web && bun run build
 
 # ---
-FROM base AS builder
-# First install the dependencies (as they change less often)
-COPY --from=prepare /app/out/json/ .
-RUN yarn install
-# Build the project
-COPY --from=prepare /app/out/full/ .
+FROM node:24-alpine AS runner
 
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
+WORKDIR /app
 
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
-
-RUN yarn turbo build
-
-# ---
-FROM node:${NODE_VERSION}-alpine AS runner
-# Don't run production as root for security reasons
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 USER nextjs
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+# Leverage Next.js standalone output
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-CMD node apps/web/server.js
+ENV NODE_ENV=production
+
+CMD ["node", "apps/web/server.js"]
+
+EXPOSE 3000
