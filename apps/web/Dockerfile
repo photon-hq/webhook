@@ -33,17 +33,20 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install drizzle-kit for running migrations at startup
-RUN npm install -g drizzle-kit drizzle-orm pg
-
 # Leverage Next.js standalone output
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Copy drizzle migrations and config for runtime migration
+# Copy drizzle package with migrations for runtime migration
 COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle ./packages/db/drizzle
 COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle.config.ts ./packages/db/drizzle.config.ts
+COPY --from=build --chown=nextjs:nodejs /app/packages/db/package.json ./packages/db/package.json
+
+# Install migration dependencies locally in packages/db
+RUN cd packages/db && npm install --omit=dev drizzle-kit drizzle-orm pg
+
+RUN chown -R nextjs:nodejs packages/db
 
 USER nextjs
 
@@ -51,4 +54,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD sh -c "cd /app/packages/db && drizzle-kit migrate || echo 'Migration failed, starting server anyway'; cd /app && node apps/web/server.js"
+CMD sh -c "cd /app/packages/db && npx drizzle-kit migrate || echo 'Migration failed, starting server anyway'; cd /app && node apps/web/server.js"
