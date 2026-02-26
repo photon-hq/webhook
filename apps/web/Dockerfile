@@ -51,4 +51,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD sh -c "cd packages/db && drizzle-kit migrate && cd /app && node apps/web/server.js"
+CMD sh -c "cd /app/packages/db && drizzle-kit migrate || echo 'Migration failed, starting server anyway'; cd /app && node apps/web/server.js"
