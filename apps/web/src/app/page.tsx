@@ -80,19 +80,11 @@ export default function Home() {
           >
             <p className="font-medium">{state.message}</p>
             {state.data && (
-              <div className="mt-3 flex flex-col gap-2">
-                <div>
-                  <span className="font-medium">Public Key:</span>
-                  <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5">
-                    {state.data.publicKey}
-                  </pre>
-                </div>
-                <div>
-                  <span className="font-medium">Private Key:</span>
-                  <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5">
-                    {state.data.privateKey}
-                  </pre>
-                </div>
+              <div className="mt-3">
+                <span className="font-medium">Public Key:</span>
+                <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5">
+                  {state.data.publicKey}
+                </pre>
               </div>
             )}
           </div>

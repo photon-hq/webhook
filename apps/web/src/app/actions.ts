@@ -9,7 +9,6 @@ export type ActionResult = {
   message: string;
   data?: {
     publicKey: string;
-    privateKey: string;
   };
 };
 
@@ -62,7 +61,7 @@ export async function submitWebhookConfig(
       success: true,
       message:
         "Server URL already exists. Updated API key, webhook, and regenerated secret.",
-      data: { publicKey, privateKey },
+      data: { publicKey },
     };
   }
 
@@ -77,6 +76,6 @@ export async function submitWebhookConfig(
   return {
     success: true,
     message: "Webhook config created successfully.",
-    data: { publicKey, privateKey },
+    data: { publicKey },
   };
 }

@@ -1,7 +1,11 @@
-import { db, webhookConfigs } from "@turbobun/db";
+import type { webhookConfigs } from "@turbobun/db";
 import pg from "pg";
+import { ConfigStore } from "./config-store.js";
 
 const CHANNEL = "webhook_configs_changes";
+
+const store = new ConfigStore();
+await store.load();
 
 const setupRealtimeListener = async () => {
   const client = new pg.Client(process.env.DATABASE_URL);
@@ -34,10 +38,13 @@ const setupRealtimeListener = async () => {
         operation: string;
         record: typeof webhookConfigs.$inferSelect;
       };
-      console.log(
-        `[${payload.operation}] webhook_config updated:`,
-        payload.record.serverUrl
-      );
+
+      store.set(payload.record.serverUrl, {
+        apiKey: payload.record.apiKey,
+        privateKey: payload.record.privateKey,
+        webhook: payload.record.webhook,
+      });
+      console.log(`[${payload.operation}] ${payload.record.serverUrl} updated`);
     }
   });
 
@@ -52,9 +59,6 @@ const setupRealtimeListener = async () => {
 
   return client;
 };
-
-const configs = await db.select().from(webhookConfigs);
-console.log(`Loaded ${configs.length} webhook configs`);
 
 const listener = await setupRealtimeListener();
 
