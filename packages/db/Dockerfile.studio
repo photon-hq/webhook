@@ -1,0 +1,20 @@
+FROM oven/bun:1
+
+WORKDIR /app
+
+COPY package.json bun.lockb ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/api/package.json ./apps/api/package.json
+COPY packages/db/package.json ./packages/db/package.json
+COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
+
+RUN bun install
+
+COPY packages/db ./packages/db
+COPY packages/typescript-config ./packages/typescript-config
+
+WORKDIR /app/packages/db
+
+EXPOSE 4983
+
+CMD ["bun", "drizzle-kit", "studio", "--host", "0.0.0.0", "--port", "4983"]

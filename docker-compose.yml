@@ -19,3 +19,13 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
     restart: always
+  webhook-drizzle-studio:
+    container_name: webhook-drizzle-studio
+    build:
+      context: .
+      dockerfile: ./packages/db/Dockerfile.studio
+    ports:
+      - 4983
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    restart: always
