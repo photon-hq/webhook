@@ -8,10 +8,14 @@ services:
       dockerfile: ./apps/web/Dockerfile
     ports:
       - 3000
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
     restart: always
   webhook-api:
     container_name: webhook-api
     build:
       context: .
       dockerfile: ./apps/api/Dockerfile
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
     restart: always
