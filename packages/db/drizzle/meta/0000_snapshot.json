@@ -1,5 +1,5 @@
 {
-  "id": "e64462c5-fb44-4181-93d9-0e55048fb9e8",
+  "id": "e4539e15-896d-469d-974c-505ffc3b9f12",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -21,8 +21,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "key": {
-          "name": "key",
+        "public_key": {
+          "name": "public_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "private_key": {
+          "name": "private_key",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -32,6 +38,19 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "api_key": {
+          "name": "api_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
