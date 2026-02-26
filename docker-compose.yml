@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
+    ports:
+      - 3000
     restart: always
   webhook-api:
     container_name: webhook-api
