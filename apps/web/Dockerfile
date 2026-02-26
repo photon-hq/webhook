@@ -21,7 +21,7 @@ COPY packages/typescript-config ./packages/typescript-config
 ENV NODE_ENV=production
 
 # Generate drizzle migrations
-RUN cd apps/web && bun run db:generate
+RUN cd packages/db && bun run db:generate
 
 RUN cd apps/web && bun run build
 
@@ -42,8 +42,8 @@ COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.n
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
 # Copy drizzle migrations and config for runtime migration
-COPY --from=build --chown=nextjs:nodejs /app/apps/web/drizzle ./apps/web/drizzle
-COPY --from=build --chown=nextjs:nodejs /app/apps/web/drizzle.config.ts ./apps/web/drizzle.config.ts
+COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle ./packages/db/drizzle
+COPY --from=build --chown=nextjs:nodejs /app/packages/db/drizzle.config.ts ./packages/db/drizzle.config.ts
 
 USER nextjs
 
@@ -51,4 +51,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD sh -c "cd apps/web && drizzle-kit migrate && cd /app && node apps/web/server.js"
+CMD sh -c "cd packages/db && drizzle-kit migrate && cd /app && node apps/web/server.js"
