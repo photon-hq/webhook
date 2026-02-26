@@ -7,12 +7,14 @@ COPY package.json package.json
 COPY bun.lockb bun.lockb
 
 COPY apps/web/package.json ./apps/web/package.json
+COPY apps/api/package.json ./apps/api/package.json
 COPY packages/eden/package.json ./packages/eden/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 
 RUN bun install
 
 COPY apps/web ./apps/web
+COPY apps/api ./apps/api
 COPY packages/eden ./packages/eden
 COPY packages/typescript-config ./packages/typescript-config
 
