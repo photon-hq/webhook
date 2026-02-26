@@ -20,6 +20,9 @@ COPY packages/typescript-config ./packages/typescript-config
 
 ENV NODE_ENV=production
 
+# Generate drizzle migrations
+RUN cd apps/web && bun run db:generate
+
 RUN cd apps/web && bun run build
 
 # ---
@@ -29,15 +32,23 @@ WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-USER nextjs
+
+# Install drizzle-kit for running migrations at startup
+RUN npm install -g drizzle-kit pg dotenv
 
 # Leverage Next.js standalone output
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
+# Copy drizzle migrations and config for runtime migration
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/drizzle ./apps/web/drizzle
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/drizzle.config.ts ./apps/web/drizzle.config.ts
+
+USER nextjs
+
 ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["node", "apps/web/server.js"]
+CMD sh -c "cd apps/web && drizzle-kit migrate && cd /app && node apps/web/server.js"
