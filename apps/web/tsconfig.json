@@ -10,11 +10,10 @@
   },
   "include": [
     "next-env.d.ts",
-    "next.config.mjs",
+    "next.config.js",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    "postcss.config.js"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

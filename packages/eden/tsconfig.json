@@ -1,7 +1,7 @@
 {
   "extends": "@turbobun/typescript-config/base.json",
-  "include": ["*.ts", "src"],
-  "exclude": ["node_modules"],
+  "include": ["../eden/*.ts", "../eden/src"],
+  "exclude": ["../eden/node_modules"],
   "compilerOptions": {
     "strictNullChecks": true
   }
