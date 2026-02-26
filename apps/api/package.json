@@ -1,6 +1,7 @@
 {
   "name": "@turbobun/api",
   "version": "0.0.1",
+  "type": "module",
   "main": "./src/index.ts",
   "module": "src/index.ts",
   "scripts": {
@@ -9,11 +10,12 @@
   },
   "dependencies": {
     "@turbobun/db": "workspace:*",
-    "elysia": "1.1.17"
+    "pg": "^8.19.0"
   },
   "devDependencies": {
     "@types/bun": "1.1.10",
     "@types/node": "22.7.4",
+    "@types/pg": "^8.16.0",
     "@turbobun/typescript-config": "*"
   }
 }
