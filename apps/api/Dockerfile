@@ -10,7 +10,7 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/db/package.json ./packages/db/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 
-RUN bun install --frozen-lockfile
+RUN bun install
 
 COPY apps/api ./apps/api
 COPY packages/db ./packages/db
