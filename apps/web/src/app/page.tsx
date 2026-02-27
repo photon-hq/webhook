@@ -11,7 +11,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background font-sans">
-      <main className="flex w-full max-w-lg flex-col items-center gap-8 bg-white px-16 py-32 sm:items-start dark:bg-black">
+      <main className="flex w-full max-w-lg flex-col items-center gap-8 px-16 py-32 sm:items-start">
         <div className="flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
           <h1 className="font-semibold text-3xl text-black leading-10 tracking-tight dark:text-zinc-50">
             Advanced iMessage Kit Webhook
