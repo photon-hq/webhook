@@ -20,8 +20,8 @@ COPY packages/typescript-config ./packages/typescript-config
 
 ENV NODE_ENV=production
 
-# Generate drizzle migrations
-RUN cd packages/db && bun run db:generate
+# Generate drizzle migrations (no DB connection needed, only reads schema files)
+RUN DATABASE_URL=placeholder cd packages/db && bun run db:generate
 
 # Build the migrate script to plain JS so it runs without tsx/bun in the runner
 RUN cd packages/db && bun build scripts/migrate.ts --outdir scripts --target node --external pg
