@@ -62,6 +62,7 @@ export default function Home() {
                       strokeWidth={2}
                       viewBox="0 0 24 24"
                     >
+                      <title>Copied</title>
                       <path
                         d="M5 13l4 4L19 7"
                         strokeLinecap="round"
@@ -76,6 +77,7 @@ export default function Home() {
                       strokeWidth={2}
                       viewBox="0 0 24 24"
                     >
+                      <title>Copy to clipboard</title>
                       <rect
                         height="13"
                         rx="2"
