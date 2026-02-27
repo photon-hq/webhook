@@ -11,6 +11,8 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
     restart: always
+    networks:
+          - webhook-network
   webhook-api:
     container_name: webhook-api
     build:
@@ -20,4 +22,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     restart: always
     networks:
-          - dokploy-network
+          - webhook-network
+networks:
+    webhook-network:
+        external: true
