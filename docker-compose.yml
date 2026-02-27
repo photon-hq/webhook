@@ -24,4 +24,4 @@ services:
     networks:
           - webhook-network
 networks:
-    webhook-network
+    webhook-network:
