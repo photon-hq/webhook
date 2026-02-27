@@ -6,7 +6,8 @@
         "name": "next"
       }
     ],
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "noUncheckedSideEffectImports": false
   },
   "include": [
     "next-env.d.ts",

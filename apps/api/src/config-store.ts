@@ -1,13 +1,13 @@
 import { db, webhookConfigs } from "@turbobun/db";
 
-interface WebhookConfig {
+export interface WebhookConfig {
   apiKey: string;
   privateKey: string;
   webhook: string;
 }
 
 export class ConfigStore {
-  private configs = new Map<string, WebhookConfig>();
+  private readonly configs = new Map<string, WebhookConfig>();
 
   async load() {
     const rows = await db.select().from(webhookConfigs);
@@ -35,6 +35,10 @@ export class ConfigStore {
 
   delete(serverUrl: string): boolean {
     return this.configs.delete(serverUrl);
+  }
+
+  entries(): IterableIterator<[string, WebhookConfig]> {
+    return this.configs.entries();
   }
 
   get size(): number {

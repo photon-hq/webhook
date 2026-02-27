@@ -1,11 +1,15 @@
 import type { webhookConfigs } from "@turbobun/db";
 import pg from "pg";
 import { ConfigStore } from "./config-store.js";
+import { SDKPool } from "./sdk-pool.js";
 
 const CHANNEL = "webhook_configs_changes";
 
 const store = new ConfigStore();
 await store.load();
+
+const pool = new SDKPool();
+await pool.initialize(store);
 
 const setupRealtimeListener = async () => {
   const client = new pg.Client(process.env.DATABASE_URL);
@@ -17,9 +21,9 @@ const setupRealtimeListener = async () => {
     BEGIN
       PERFORM pg_notify('${CHANNEL}', json_build_object(
         'operation', TG_OP,
-        'record', row_to_json(NEW)
+        'record', row_to_json(COALESCE(NEW, OLD))
       )::text);
-      RETURN NEW;
+      RETURN COALESCE(NEW, OLD);
     END;
     $$ LANGUAGE plpgsql;
   `);
@@ -27,25 +31,59 @@ const setupRealtimeListener = async () => {
   await client.query(`
     DROP TRIGGER IF EXISTS webhook_configs_notify ON webhook_configs;
     CREATE TRIGGER webhook_configs_notify
-    AFTER INSERT OR UPDATE ON webhook_configs
+    AFTER INSERT OR UPDATE OR DELETE ON webhook_configs
     FOR EACH ROW
     EXECUTE FUNCTION notify_webhook_configs_changes();
   `);
 
   client.on("notification", (msg) => {
-    if (msg.channel === CHANNEL && msg.payload) {
-      const payload = JSON.parse(msg.payload) as {
-        operation: string;
-        record: typeof webhookConfigs.$inferSelect;
-      };
-
-      store.set(payload.record.serverUrl, {
-        apiKey: payload.record.apiKey,
-        privateKey: payload.record.privateKey,
-        webhook: payload.record.webhook,
-      });
-      console.log(`[${payload.operation}] ${payload.record.serverUrl} updated`);
+    if (msg.channel !== CHANNEL || !msg.payload) {
+      return;
     }
+
+    const payload = JSON.parse(msg.payload) as {
+      operation: string;
+      record: typeof webhookConfigs.$inferSelect;
+    };
+
+    const { operation, record } = payload;
+    const { serverUrl, apiKey, privateKey, webhook } = record;
+
+    const handleNotification = async () => {
+      switch (operation) {
+        case "INSERT": {
+          store.set(serverUrl, { apiKey, privateKey, webhook });
+          await pool.add(serverUrl, apiKey);
+          console.log(`[INSERT] ${serverUrl} added`);
+          break;
+        }
+        case "UPDATE": {
+          const existing = store.get(serverUrl);
+          store.set(serverUrl, { apiKey, privateKey, webhook });
+
+          if (existing?.apiKey !== apiKey) {
+            await pool.update(serverUrl, apiKey);
+            console.log(`[UPDATE] ${serverUrl} SDK reset (apiKey changed)`);
+          } else {
+            console.log(`[UPDATE] ${serverUrl} config updated`);
+          }
+          break;
+        }
+        case "DELETE": {
+          await pool.remove(serverUrl);
+          store.delete(serverUrl);
+          console.log(`[DELETE] ${serverUrl} removed`);
+          break;
+        }
+        default: {
+          console.log(`[${operation}] Unknown operation for ${serverUrl}`);
+        }
+      }
+    };
+
+    handleNotification().catch((error) => {
+      console.error(`Error handling ${operation} for ${serverUrl}:`, error);
+    });
   });
 
   client.on("error", (err) => {
@@ -64,6 +102,7 @@ const listener = await setupRealtimeListener();
 
 const shutdown = async () => {
   console.log("Shutting down...");
+  await pool.closeAll();
   await listener.end();
   process.exit(0);
 };

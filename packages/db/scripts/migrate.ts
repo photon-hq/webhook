@@ -13,4 +13,4 @@ const main = async () => {
   process.exit(0);
 };
 
-void main();
+await main();

@@ -4,13 +4,13 @@ import { generateKeyPairSync } from "node:crypto";
 import { db, webhookConfigs } from "@turbobun/db";
 import { eq } from "drizzle-orm";
 
-export type ActionResult = {
-  success: boolean;
-  message: string;
+export interface ActionResult {
   data?: {
     publicKey: string;
   };
-};
+  message: string;
+  success: boolean;
+}
 
 export async function submitWebhookConfig(
   _prev: ActionResult | null,

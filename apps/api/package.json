@@ -9,6 +9,7 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
+    "@photon-ai/advanced-imessage-kit": "latest",
     "@turbobun/db": "workspace:*",
     "pg": "^8.19.0"
   },
