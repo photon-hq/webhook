@@ -24,5 +24,4 @@ services:
     networks:
           - webhook-network
 networks:
-    webhook-network:
-        external: true
+    webhook-network
