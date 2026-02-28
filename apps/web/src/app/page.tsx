@@ -10,13 +10,13 @@ export default function Home() {
   >(submitWebhookConfig, null);
   const [copied, setCopied] = useState(false);
 
-  const isSuccess = state?.success && state.data;
+  const isSuccess = state?.success && state.data?.signingSecret;
 
   const handleCopy = async () => {
-    if (!state?.data?.publicKey) {
+    if (!state?.data?.signingSecret) {
       return;
     }
-    await navigator.clipboard.writeText(state.data.publicKey);
+    await navigator.clipboard.writeText(state.data.signingSecret);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -34,7 +34,7 @@ export default function Home() {
           </h1>
           <p className="text-lg text-zinc-600 leading-8 dark:text-zinc-400">
             {isSuccess
-              ? "Your webhook has been configured successfully. Copy the public key below to use in your application."
+              ? "Your webhook has been configured successfully. Copy the signing secret below to use in your application."
               : "Create a secure webhook endpoint by providing your server URL, API key, and webhook URL."}
           </p>
         </div>
@@ -43,11 +43,11 @@ export default function Home() {
           <div className="flex w-full flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
-                Public Key
+                Signing Secret
               </span>
               <div className="relative">
                 <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-black/[.08] bg-transparent p-4 pr-12 font-mono text-black text-sm dark:border-white/[.145] dark:text-zinc-50">
-                  {state.data?.publicKey}
+                  {state.data?.signingSecret}
                 </pre>
                 <button
                   className="absolute top-3 right-3 rounded-md border border-black/[.08] bg-white p-1.5 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-700 dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
