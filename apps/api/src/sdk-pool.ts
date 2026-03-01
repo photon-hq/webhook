@@ -71,7 +71,7 @@ export class SDKPool {
 
   private async forwardEvent(
     serverUrl: string,
-    event: string,
+    event: PhotonEventName,
     data: unknown
   ): Promise<void> {
     const config = this.store.get(serverUrl);
