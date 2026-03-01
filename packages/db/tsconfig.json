@@ -1,6 +1,6 @@
 {
   "extends": "@turbobun/typescript-config/base.json",
-  "include": ["../db/*.ts", "../db/src"],
+  "include": ["../db/*.ts", "../db/src", "scripts"],
   "exclude": ["../db/node_modules"],
   "compilerOptions": {
     "strictNullChecks": true
