@@ -1,22 +1,43 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { type ActionResult, submitWebhookConfig } from "./actions";
 
 export default function Home() {
-  const [state, formAction, isPending] = useActionState<
-    ActionResult | null,
-    FormData
-  >(submitWebhookConfig, null);
+  const [isPending, setIsPending] = useState(false);
+  const [result, setResult] = useState<ActionResult | null>(null);
+
+  const isSuccess = result?.success && result.data?.signingSecret;
   const [copied, setCopied] = useState(false);
 
-  const isSuccess = state?.success && state.data?.signingSecret;
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setIsPending(true);
+
+    const promise = submitWebhookConfig(null, formData)
+      .then((res) => {
+        if (!res.success) {
+          throw new Error(res.message);
+        }
+        setResult(res);
+        return res;
+      })
+      .finally(() => setIsPending(false));
+
+    toast.promise(promise, {
+      loading: "Configuring webhook...",
+      success: (res) => res.message,
+      error: (err) => err.message,
+    });
+  };
 
   const handleCopy = async () => {
-    if (!state?.data?.signingSecret) {
+    if (!result?.data?.signingSecret) {
       return;
     }
-    await navigator.clipboard.writeText(state.data.signingSecret);
+    await navigator.clipboard.writeText(result.data.signingSecret);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -47,7 +68,7 @@ export default function Home() {
               </span>
               <div className="relative">
                 <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-black/[.08] bg-transparent p-4 pr-12 font-mono text-black text-sm dark:border-white/[.145] dark:text-zinc-50">
-                  {state.data?.signingSecret}
+                  {result.data?.signingSecret}
                 </pre>
                 <button
                   className="absolute top-3 right-3 rounded-md border border-black/[.08] bg-white p-1.5 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-700 dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
@@ -117,62 +138,54 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <>
-            <form action={formAction} className="flex w-full flex-col gap-4">
-              <label className="flex flex-col gap-1.5" htmlFor="server-url">
-                <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
-                  Server URL
-                </span>
-                <input
-                  className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
-                  id="server-url"
-                  name="serverUrl"
-                  placeholder="https://example.com/webhook"
-                  required
-                  type="url"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5" htmlFor="api-key">
-                <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
-                  API Key
-                </span>
-                <input
-                  className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
-                  id="api-key"
-                  name="apiKey"
-                  placeholder="your-api-key"
-                  required
-                  type="text"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5" htmlFor="webhook-url">
-                <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
-                  Webhook URL
-                </span>
-                <input
-                  className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
-                  id="webhook-url"
-                  name="webhookUrl"
-                  placeholder="https://example.com/hook"
-                  required
-                  type="url"
-                />
-              </label>
-              <button
-                className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-foreground font-medium text-background text-base transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-                disabled={isPending}
-                type="submit"
-              >
-                {isPending ? "Configuring..." : "Config"}
-              </button>
-            </form>
-
-            {state && !state.success && (
-              <div className="w-full rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-                <p className="font-medium">{state.message}</p>
-              </div>
-            )}
-          </>
+          <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
+            <label className="flex flex-col gap-1.5" htmlFor="server-url">
+              <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
+                Server URL
+              </span>
+              <input
+                className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
+                id="server-url"
+                name="serverUrl"
+                placeholder="https://example.com/webhook"
+                required
+                type="url"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5" htmlFor="api-key">
+              <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
+                API Key
+              </span>
+              <input
+                className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
+                id="api-key"
+                name="apiKey"
+                placeholder="your-api-key"
+                required
+                type="text"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5" htmlFor="webhook-url">
+              <span className="font-medium text-sm text-zinc-700 dark:text-zinc-300">
+                Webhook URL
+              </span>
+              <input
+                className="h-12 rounded-lg border border-black/[.08] bg-transparent px-4 text-base text-black outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-zinc-50 dark:placeholder:text-zinc-600"
+                id="webhook-url"
+                name="webhookUrl"
+                placeholder="https://example.com/hook"
+                required
+                type="url"
+              />
+            </label>
+            <button
+              className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-foreground font-medium text-background text-base transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+              disabled={isPending}
+              type="submit"
+            >
+              {isPending ? "Configuring..." : "Config"}
+            </button>
+          </form>
         )}
       </main>
     </div>

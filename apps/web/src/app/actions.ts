@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { db, webhookConfigs } from "@turbobun/db";
 import { eq } from "drizzle-orm";
+import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 
 export interface ActionResult {
   data?: {
@@ -32,6 +33,29 @@ export async function submitWebhookConfig(
     new URL(webhook);
   } catch {
     return { success: false, message: "Invalid URL format." };
+  }
+
+  const verified = await new Promise<boolean>((resolve) => {
+    const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
+    const timer = setTimeout(() => {
+      sdk.close().catch(() => {});
+      resolve(false);
+    }, 5000);
+
+    sdk.on("ready", () => {
+      clearTimeout(timer);
+      sdk.close().catch(() => {});
+      resolve(true);
+    });
+
+    sdk.connect().catch(() => {
+      clearTimeout(timer);
+      resolve(false);
+    });
+  });
+
+  if (!verified) {
+    return { success: false, message: "Invalid server URL or API key." };
   }
 
   const signingSecret = randomBytes(32).toString("hex");
