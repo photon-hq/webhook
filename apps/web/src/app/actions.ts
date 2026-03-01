@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 import { db, webhookConfigs } from "@turbobun/db";
 import { eq } from "drizzle-orm";
 
@@ -32,6 +33,27 @@ export async function submitWebhookConfig(
     new URL(webhook);
   } catch {
     return { success: false, message: "Invalid URL format." };
+  }
+
+  const verified = await new Promise<boolean>((resolve) => {
+    const sdk = new AdvancedIMessageKit({ serverUrl, apiKey, logLevel: "error" });
+
+    const cleanup = (result: boolean) => {
+      clearTimeout(timer);
+      sdk.close().catch(() => {});
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => cleanup(false), 5000);
+
+    sdk.on("ready", () => cleanup(true));
+    sdk.on("error", () => cleanup(false));
+
+    sdk.connect().catch(() => cleanup(false));
+  });
+
+  if (!verified) {
+    return { success: false, message: "Invalid server URL or API key." };
   }
 
   const signingSecret = randomBytes(32).toString("hex");

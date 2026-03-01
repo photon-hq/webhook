@@ -8,10 +8,12 @@
     "start": "next start"
   },
   "dependencies": {
+    "@photon-ai/advanced-imessage-kit": "^1.14.3",
     "@turbobun/db": "workspace:*",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
