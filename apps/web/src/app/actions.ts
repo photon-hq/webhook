@@ -1,9 +1,9 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 import { db, webhookConfigs } from "@turbobun/db";
 import { eq } from "drizzle-orm";
-import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 
 export interface ActionResult {
   data?: {
@@ -36,22 +36,20 @@ export async function submitWebhookConfig(
   }
 
   const verified = await new Promise<boolean>((resolve) => {
-    const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
-    const timer = setTimeout(() => {
-      sdk.close().catch(() => {});
-      resolve(false);
-    }, 5000);
+    const sdk = new AdvancedIMessageKit({ serverUrl, apiKey, logLevel: "error" });
 
-    sdk.on("ready", () => {
+    const cleanup = (result: boolean) => {
       clearTimeout(timer);
       sdk.close().catch(() => {});
-      resolve(true);
-    });
+      resolve(result);
+    };
 
-    sdk.connect().catch(() => {
-      clearTimeout(timer);
-      resolve(false);
-    });
+    const timer = setTimeout(() => cleanup(false), 5000);
+
+    sdk.on("ready", () => cleanup(true));
+    sdk.on("error", () => cleanup(false));
+
+    sdk.connect().catch(() => cleanup(false));
   });
 
   if (!verified) {
