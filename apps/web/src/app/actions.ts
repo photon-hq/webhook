@@ -1,12 +1,12 @@
 "use server";
 
-import { generateKeyPairSync } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { db, webhookConfigs } from "@turbobun/db";
 import { eq } from "drizzle-orm";
 
 export interface ActionResult {
   data?: {
-    publicKey: string;
+    signingSecret: string;
   };
   message: string;
   success: boolean;
@@ -34,10 +34,7 @@ export async function submitWebhookConfig(
     return { success: false, message: "Invalid URL format." };
   }
 
-  const { publicKey, privateKey } = generateKeyPairSync("ed25519", {
-    publicKeyEncoding: { type: "spki", format: "pem" },
-    privateKeyEncoding: { type: "pkcs8", format: "pem" },
-  });
+  const signingSecret = randomBytes(32).toString("hex");
 
   const existing = await db
     .select({ id: webhookConfigs.id })
@@ -51,8 +48,7 @@ export async function submitWebhookConfig(
       .set({
         apiKey,
         webhook,
-        publicKey,
-        privateKey,
+        signingSecret,
         updatedAt: new Date(),
       })
       .where(eq(webhookConfigs.serverUrl, serverUrl));
@@ -60,8 +56,8 @@ export async function submitWebhookConfig(
     return {
       success: true,
       message:
-        "Server URL already exists. Updated API key, webhook, and regenerated secret.",
-      data: { publicKey },
+        "Server URL already exists. Updated API key, webhook, and regenerated signing secret.",
+      data: { signingSecret },
     };
   }
 
@@ -69,13 +65,12 @@ export async function submitWebhookConfig(
     serverUrl,
     apiKey,
     webhook,
-    publicKey,
-    privateKey,
+    signingSecret,
   });
 
   return {
     success: true,
     message: "Webhook config created successfully.",
-    data: { publicKey },
+    data: { signingSecret },
   };
 }

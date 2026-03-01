@@ -1,0 +1,13 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+  "name": "photon-webhook Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/photon-webhook",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "runServices": ["postgres"],
+  "postCreateCommand": "if ! docker info > /dev/null 2>&1; then sudo update-alternatives --set iptables /usr/sbin/iptables-nft; fi"
+}

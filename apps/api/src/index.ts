@@ -47,19 +47,19 @@ const setupRealtimeListener = async () => {
     };
 
     const { operation, record } = payload;
-    const { serverUrl, apiKey, privateKey, webhook } = record;
+    const { serverUrl, apiKey, signingSecret, webhook } = record;
 
     const handleNotification = async () => {
       switch (operation) {
         case "INSERT": {
-          store.set(serverUrl, { apiKey, privateKey, webhook });
+          store.set(serverUrl, { apiKey, signingSecret, webhook });
           await pool.add(serverUrl, apiKey);
           console.log(`[INSERT] ${serverUrl} added`);
           break;
         }
         case "UPDATE": {
           const existing = store.get(serverUrl);
-          store.set(serverUrl, { apiKey, privateKey, webhook });
+          store.set(serverUrl, { apiKey, signingSecret, webhook });
 
           if (existing?.apiKey !== apiKey) {
             await pool.update(serverUrl, apiKey);

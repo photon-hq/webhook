@@ -8,13 +8,14 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "module": "ESNext",
+    "module": "esnext",
     "moduleResolution": "Bundler",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "target": "esnext"
   },
   "exclude": ["node_modules"]
 }

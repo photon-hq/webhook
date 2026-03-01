@@ -2,7 +2,7 @@ import { db, webhookConfigs } from "@turbobun/db";
 
 export interface WebhookConfig {
   apiKey: string;
-  privateKey: string;
+  signingSecret: string;
   webhook: string;
 }
 
@@ -14,7 +14,7 @@ export class ConfigStore {
     for (const row of rows) {
       this.configs.set(row.serverUrl, {
         apiKey: row.apiKey,
-        privateKey: row.privateKey,
+        signingSecret: row.signingSecret,
         webhook: row.webhook,
       });
     }

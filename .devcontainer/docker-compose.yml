@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:22-bookworm
+    volumes:
+      - ..:/workspaces/photon-webhook:cached
+
+    # Overrides default command so container doesn't exit.
+    command: sleep infinity
+
+  postgres:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: webhook
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
