@@ -1,7 +1,6 @@
 import { codeToHtml } from "shiki";
+import { LANGUAGES, type Language } from "./languages";
 import { WebhookConfig } from "./webhook-config";
-
-type Language = "typescript" | "python" | "rust" | "go";
 
 const SNIPPETS: Record<Language, string> = {
   typescript: `import { createHmac } from "node:crypto";
@@ -155,12 +154,10 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 }`,
 };
 
-const LANGUAGE_IDS: Language[] = ["typescript", "python", "rust", "go"];
-
 export default async function Home() {
   const highlightedSnippets = Object.fromEntries(
     await Promise.all(
-      LANGUAGE_IDS.map(async (lang) => {
+      LANGUAGES.map(async ({ id: lang }) => {
         const html = await codeToHtml(SNIPPETS[lang], {
           lang,
           themes: {

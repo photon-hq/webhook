@@ -4,14 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { type ActionResult, submitWebhookConfig } from "./actions";
 
-type Language = "typescript" | "python" | "rust" | "go";
-
-const LANGUAGES: { id: Language; label: string }[] = [
-  { id: "typescript", label: "TypeScript" },
-  { id: "python", label: "Python" },
-  { id: "rust", label: "Rust" },
-  { id: "go", label: "Go" },
-];
+import { LANGUAGES, type Language } from "./languages";
 
 interface WebhookConfigProps {
   highlightedSnippets: Record<Language, string>;
