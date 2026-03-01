@@ -44,7 +44,7 @@ export async function submitWebhookConfig(
 
     const cleanup = (result: boolean) => {
       clearTimeout(timer);
-      sdk.close()
+      sdk.close();
       resolve(result);
     };
 
