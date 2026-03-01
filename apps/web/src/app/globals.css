@@ -24,3 +24,28 @@ body {
   color: var(--foreground);
   background: var(--background);
 }
+
+/* Shiki code highlighting */
+.shiki-container .shiki {
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  background-color: transparent !important;
+}
+
+.shiki-container .shiki code {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .shiki,
+  .shiki span {
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    color: var(--shiki-dark) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
+}
