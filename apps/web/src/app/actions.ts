@@ -36,7 +36,11 @@ export async function submitWebhookConfig(
   }
 
   const verified = await new Promise<boolean>((resolve) => {
-    const sdk = new AdvancedIMessageKit({ serverUrl, apiKey, logLevel: "error" });
+    const sdk = new AdvancedIMessageKit({
+      serverUrl,
+      apiKey,
+      logLevel: "error",
+    });
 
     const cleanup = (result: boolean) => {
       clearTimeout(timer);
