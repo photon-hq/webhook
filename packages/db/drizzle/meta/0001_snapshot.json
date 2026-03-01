@@ -54,9 +54,7 @@
         "webhook_configs_server_url_unique": {
           "name": "webhook_configs_server_url_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "server_url"
-          ]
+          "columns": ["server_url"]
         }
       },
       "policies": {},

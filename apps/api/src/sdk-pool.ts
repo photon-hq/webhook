@@ -86,20 +86,28 @@ export class SDKPool {
       .update(sigBase)
       .digest("hex");
 
-    const response = await fetch(config.webhook, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Photon-Signature": `v0=${signature}`,
-        "X-Photon-Timestamp": timestamp,
-      },
-      body,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
 
-    if (!response.ok) {
-      console.error(
-        `Webhook delivery failed for ${serverUrl} [${event}]: HTTP ${response.status}`
-      );
+    try {
+      const response = await fetch(config.webhook, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Photon-Signature": `v0=${signature}`,
+          "X-Photon-Timestamp": timestamp,
+        },
+        body,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        console.error(
+          `Webhook delivery failed for ${serverUrl} [${event}]: HTTP ${response.status}`
+        );
+      }
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
