@@ -154,21 +154,46 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 }`,
 };
 
+const PAYLOAD_SNIPPET = `import type { MessageResponse } from "@photon-ai/advanced-imessage-kit";
+
+interface WebhookPayload {
+  event:
+    | "new-message"               | "updated-message"
+    | "message-send-error"        | "chat-read-status-changed"
+    | "group-name-change"         | "participant-added"
+    | "participant-removed"       | "participant-left"
+    | "group-icon-changed"        | "group-icon-removed"
+    | "typing-indicator"          | "new-server"
+    | "server-update"             | "server-update-downloading"
+    | "server-update-installing"  | "ft-call-status-changed"
+    | "new-findmy-location"
+    | "scheduled-message-created" | "scheduled-message-updated"
+    | "scheduled-message-deleted" | "scheduled-message-sent"
+    | "scheduled-message-error";
+  data: MessageResponse;
+}`;
+
 export default async function Home() {
-  const highlightedSnippets = Object.fromEntries(
-    await Promise.all(
+  const [highlightedSnippets, highlightedPayload] = await Promise.all([
+    Promise.all(
       LANGUAGES.map(async ({ id: lang }) => {
         const html = await codeToHtml(SNIPPETS[lang], {
           lang,
-          themes: {
-            light: "github-light",
-            dark: "github-dark-dimmed",
-          },
+          themes: { light: "github-light", dark: "github-dark-dimmed" },
         });
-        return [lang, html];
+        return [lang, html] as [Language, string];
       })
-    )
-  ) as Record<Language, string>;
+    ).then(Object.fromEntries<string>),
+    codeToHtml(PAYLOAD_SNIPPET, {
+      lang: "typescript",
+      themes: { light: "github-light", dark: "github-dark-dimmed" },
+    }),
+  ]);
 
-  return <WebhookConfig highlightedSnippets={highlightedSnippets} />;
+  return (
+    <WebhookConfig
+      highlightedPayload={highlightedPayload}
+      highlightedSnippets={highlightedSnippets as Record<Language, string>}
+    />
+  );
 }
