@@ -46,6 +46,6 @@ body {
     font-weight: var(--shiki-dark-font-weight) !important;
     color: var(--shiki-dark) !important;
     text-decoration: var(--shiki-dark-text-decoration) !important;
-    background-color: var(--shiki-dark-bg) !important;
+    /* background-color: var(--shiki-dark-bg) !important; */
   }
 }
