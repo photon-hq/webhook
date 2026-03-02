@@ -7,10 +7,14 @@ import { type ActionResult, submitWebhookConfig } from "./actions";
 import { LANGUAGES, type Language } from "./languages";
 
 interface WebhookConfigProps {
+  highlightedPayload: string;
   highlightedSnippets: Record<Language, string>;
 }
 
-export function WebhookConfig({ highlightedSnippets }: WebhookConfigProps) {
+export function WebhookConfig({
+  highlightedPayload,
+  highlightedSnippets,
+}: WebhookConfigProps) {
   const [isPending, setIsPending] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [copied, setCopied] = useState(false);
@@ -128,6 +132,32 @@ export function WebhookConfig({ highlightedSnippets }: WebhookConfigProps) {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Payload docs */}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold text-base text-black dark:text-zinc-50">
+                  Payload format
+                </span>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Your endpoint receives a{" "}
+                  <code className="font-mono text-xs">POST</code> for every
+                  iMessage event. The body is JSON with an{" "}
+                  <code className="font-mono text-xs">event</code> name and a{" "}
+                  <code className="font-mono text-xs">data</code> object typed
+                  as <code className="font-mono text-xs">MessageResponse</code>{" "}
+                  from{" "}
+                  <code className="font-mono text-xs">
+                    @photon-ai/advanced-imessage-kit
+                  </code>
+                  .
+                </p>
+              </div>
+              <div
+                className="shiki-container overflow-x-auto rounded-lg border border-black/[.08] bg-zinc-50 p-4 font-mono text-xs leading-relaxed dark:border-white/[.145] dark:bg-zinc-900"
+                dangerouslySetInnerHTML={{ __html: highlightedPayload }}
+              />
             </div>
 
             {/* Integration guide */}
