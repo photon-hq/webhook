@@ -1,4 +1,3 @@
-import type { webhookConfigs } from "@turbobun/db";
 import pg from "pg";
 import { ConfigStore } from "./config-store.js";
 import { SDKPool } from "./sdk-pool.js";
@@ -43,11 +42,19 @@ const setupRealtimeListener = async () => {
 
     const payload = JSON.parse(msg.payload) as {
       operation: string;
-      record: typeof webhookConfigs.$inferSelect;
+      record: {
+        server_url: string;
+        api_key: string;
+        signing_secret: string;
+        webhook: string;
+      };
     };
 
     const { operation, record } = payload;
-    const { serverUrl, apiKey, signingSecret, webhook } = record;
+    const serverUrl = record.server_url;
+    const apiKey = record.api_key;
+    const signingSecret = record.signing_secret;
+    const { webhook } = record;
 
     const handleNotification = async () => {
       switch (operation) {
