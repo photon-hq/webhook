@@ -26,7 +26,7 @@ RUN cd packages/db && DATABASE_URL=placeholder bun run db:generate
 # Build the migrate script to plain JS so it runs without tsx/bun in the runner
 RUN cd packages/db && bun build scripts/migrate.ts --outdir scripts --target node --external pg
 
-RUN cd apps/web && bun run build
+RUN cd apps/web && DATABASE_URL=placeholder bun run build
 
 # ---
 FROM node:24-alpine AS runner
