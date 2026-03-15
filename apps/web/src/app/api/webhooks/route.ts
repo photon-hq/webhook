@@ -10,6 +10,15 @@ function generateSigningSecret(): string {
   return randomBytes(SIGNING_SECRET_BYTE_LENGTH).toString("hex");
 }
 
+function isDbError(err: unknown): err is Error & { code: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    typeof (err as Record<string, unknown>).code === "string"
+  );
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;
   try {
@@ -115,13 +124,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       return { id: inserted.id, signingSecret, created: true };
     });
   } catch (error) {
-    const isUniqueViolation =
-      error instanceof Error && "code" in error && (error as { code: string }).code === "23505";
+    const isUniqueViolation = isDbError(error) && error.code === "23505";
 
     if (isUniqueViolation) {
       const [existing] = await db
         .select({
           id: webhookConfigs.id,
+          apiKey: webhookConfigs.apiKey,
           signingSecret: webhookConfigs.signingSecret,
         })
         .from(webhookConfigs)
@@ -134,6 +143,14 @@ export async function POST(request: Request): Promise<NextResponse> {
         .limit(1);
 
       if (existing) {
+        if (existing.apiKey !== apiKey) {
+          const signingSecret = generateSigningSecret();
+          await db
+            .update(webhookConfigs)
+            .set({ apiKey, signingSecret, updatedAt: new Date() })
+            .where(eq(webhookConfigs.id, existing.id));
+          return NextResponse.json({ id: existing.id, signingSecret });
+        }
         return NextResponse.json({
           id: existing.id,
           signingSecret: existing.signingSecret,
