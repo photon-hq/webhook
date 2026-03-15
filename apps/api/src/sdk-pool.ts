@@ -37,6 +37,8 @@ export class SDKPool {
   async initialize(store: ConfigStore): Promise<void> {
     this.store = store;
     const entries = [...store.entries()];
+    // One SDK connection per server — all webhooks for the same server share
+    // the connection, so we use the first config's apiKey to authenticate.
     const promises = entries.map(([serverUrl, configs]) =>
       this.add(serverUrl, configs[0].apiKey)
     );
@@ -82,7 +84,7 @@ export class SDKPool {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const body = JSON.stringify({ event, data });
 
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       configs.map(async (config) => {
         const sigBase = `v0:${timestamp}:${body}`;
         const signature = createHmac("sha256", config.signingSecret)
@@ -114,6 +116,16 @@ export class SDKPool {
         }
       })
     );
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      if (result.status === "rejected") {
+        console.error(
+          `Webhook delivery error for ${serverUrl} → ${configs[i].webhook} [${event}]:`,
+          result.reason
+        );
+      }
+    }
   }
 
   async remove(serverUrl: string): Promise<void> {
