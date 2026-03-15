@@ -7,37 +7,67 @@ export interface WebhookConfig {
 }
 
 export class ConfigStore {
-  private readonly configs = new Map<string, WebhookConfig>();
+  private readonly configs = new Map<string, WebhookConfig[]>();
 
   async load() {
     const rows = await db.select().from(webhookConfigs);
     for (const row of rows) {
-      this.configs.set(row.serverUrl, {
+      const config: WebhookConfig = {
         apiKey: row.apiKey,
         signingSecret: row.signingSecret,
         webhook: row.webhook,
-      });
+      };
+      const existing = this.configs.get(row.serverUrl) ?? [];
+      existing.push(config);
+      this.configs.set(row.serverUrl, existing);
     }
-    console.log(`Loaded ${this.configs.size} webhook configs`);
+    const total = [...this.configs.values()].reduce(
+      (sum, arr) => sum + arr.length,
+      0
+    );
+    console.log(
+      `Loaded ${total} webhook configs across ${this.configs.size} servers`
+    );
   }
 
-  set(serverUrl: string, config: WebhookConfig) {
-    this.configs.set(serverUrl, config);
+  add(serverUrl: string, config: WebhookConfig) {
+    const existing = this.configs.get(serverUrl) ?? [];
+    const idx = existing.findIndex((c) => c.webhook === config.webhook);
+    if (idx >= 0) {
+      existing[idx] = config;
+    } else {
+      existing.push(config);
+    }
+    this.configs.set(serverUrl, existing);
   }
 
-  get(serverUrl: string): WebhookConfig | undefined {
-    return this.configs.get(serverUrl);
+  getAll(serverUrl: string): WebhookConfig[] {
+    return this.configs.get(serverUrl) ?? [];
   }
 
-  has(serverUrl: string): boolean {
-    return this.configs.has(serverUrl);
+  remove(serverUrl: string, webhook: string): boolean {
+    const existing = this.configs.get(serverUrl);
+    if (!existing) {
+      return false;
+    }
+    const filtered = existing.filter((c) => c.webhook !== webhook);
+    if (filtered.length === 0) {
+      this.configs.delete(serverUrl);
+    } else {
+      this.configs.set(serverUrl, filtered);
+    }
+    return filtered.length < existing.length;
   }
 
-  delete(serverUrl: string): boolean {
-    return this.configs.delete(serverUrl);
+  hasServer(serverUrl: string): boolean {
+    return (this.configs.get(serverUrl)?.length ?? 0) > 0;
   }
 
-  entries(): IterableIterator<[string, WebhookConfig]> {
+  serverUrls(): string[] {
+    return [...this.configs.keys()];
+  }
+
+  entries(): IterableIterator<[string, WebhookConfig[]]> {
     return this.configs.entries();
   }
 

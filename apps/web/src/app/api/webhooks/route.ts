@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 import { db, webhookConfigs } from "@turbobun/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -74,7 +74,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   const existing = await db
     .select({ id: webhookConfigs.id })
     .from(webhookConfigs)
-    .where(eq(webhookConfigs.serverUrl, serverUrl))
+    .where(
+      and(
+        eq(webhookConfigs.serverUrl, serverUrl),
+        eq(webhookConfigs.webhook, webhookUrl)
+      )
+    )
     .limit(1);
 
   if (existing.length > 0) {
@@ -82,11 +87,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       .update(webhookConfigs)
       .set({
         apiKey,
-        webhook: webhookUrl,
         signingSecret,
         updatedAt: new Date(),
       })
-      .where(eq(webhookConfigs.serverUrl, serverUrl));
+      .where(eq(webhookConfigs.id, existing[0].id));
 
     return NextResponse.json({
       id: existing[0].id,

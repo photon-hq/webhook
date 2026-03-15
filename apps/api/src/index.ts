@@ -59,27 +59,34 @@ const setupRealtimeListener = async () => {
     const handleNotification = async () => {
       switch (operation) {
         case "INSERT": {
-          store.set(serverUrl, { apiKey, signingSecret, webhook });
-          await pool.add(serverUrl, apiKey);
-          console.log(`[INSERT] ${serverUrl} added`);
+          const hadServer = store.hasServer(serverUrl);
+          store.add(serverUrl, { apiKey, signingSecret, webhook });
+          if (!hadServer) {
+            await pool.add(serverUrl, apiKey);
+          }
+          console.log(`[INSERT] ${serverUrl} → ${webhook} added`);
           break;
         }
         case "UPDATE": {
-          const existing = store.get(serverUrl);
-          store.set(serverUrl, { apiKey, signingSecret, webhook });
+          const before = store.getAll(serverUrl).find(
+            (c) => c.webhook === webhook
+          );
+          store.add(serverUrl, { apiKey, signingSecret, webhook });
 
-          if (existing?.apiKey !== apiKey) {
+          if (before?.apiKey !== apiKey) {
             await pool.update(serverUrl, apiKey);
             console.log(`[UPDATE] ${serverUrl} SDK reset (apiKey changed)`);
           } else {
-            console.log(`[UPDATE] ${serverUrl} config updated`);
+            console.log(`[UPDATE] ${serverUrl} → ${webhook} config updated`);
           }
           break;
         }
         case "DELETE": {
-          await pool.remove(serverUrl);
-          store.delete(serverUrl);
-          console.log(`[DELETE] ${serverUrl} removed`);
+          store.remove(serverUrl, webhook);
+          if (!store.hasServer(serverUrl)) {
+            await pool.remove(serverUrl);
+          }
+          console.log(`[DELETE] ${serverUrl} → ${webhook} removed`);
           break;
         }
         default: {

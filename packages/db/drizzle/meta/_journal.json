@@ -15,6 +15,13 @@
       "when": 1772250883361,
       "tag": "0001_dark_outlaw_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773811200000,
+      "tag": "0002_composite_unique_server_webhook",
+      "breakpoints": true
     }
   ]
 }
