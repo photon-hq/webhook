@@ -1,8 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 import { db, webhookConfigs } from "@turbobun/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+function generateSigningSecret(): string {
+  return randomBytes(32).toString("hex");
+}
 
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;
@@ -76,21 +80,25 @@ export async function POST(request: Request): Promise<NextResponse> {
       signingSecret: webhookConfigs.signingSecret,
     })
     .from(webhookConfigs)
-    .where(eq(webhookConfigs.serverUrl, serverUrl))
+    .where(
+      and(
+        eq(webhookConfigs.serverUrl, serverUrl),
+        eq(webhookConfigs.webhook, webhookUrl)
+      )
+    )
     .limit(1);
 
   if (existing.length > 0) {
     if (existing[0].apiKey !== apiKey) {
-      const signingSecret = randomBytes(32).toString("hex");
+      const signingSecret = generateSigningSecret();
       await db
         .update(webhookConfigs)
         .set({
           apiKey,
-          webhook: webhookUrl,
           signingSecret,
           updatedAt: new Date(),
         })
-        .where(eq(webhookConfigs.serverUrl, serverUrl));
+        .where(eq(webhookConfigs.id, existing[0].id));
 
       return NextResponse.json({
         id: existing[0].id,
@@ -104,7 +112,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   }
 
-  const signingSecret = randomBytes(32).toString("hex");
+  const signingSecret = generateSigningSecret();
 
   const [inserted] = await db
     .insert(webhookConfigs)
