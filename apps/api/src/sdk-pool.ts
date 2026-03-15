@@ -5,6 +5,8 @@ import {
 } from "@photon-ai/advanced-imessage-kit";
 import type { ConfigStore } from "./config-store.js";
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 const FORWARDED_EVENTS: PhotonEventName[] = [
   "new-message",
   "updated-message",
@@ -39,9 +41,11 @@ export class SDKPool {
     const entries = [...store.entries()];
     // One SDK connection per server — all webhooks for the same server share
     // the connection, so we use the first config's apiKey to authenticate.
-    const promises = entries.map(([serverUrl, configs]) =>
-      this.add(serverUrl, configs[0].apiKey)
-    );
+    const promises = entries
+      .filter(([, configs]) => configs.length > 0)
+      .map(([serverUrl, configs]) =>
+        this.add(serverUrl, configs[0].apiKey)
+      );
     await Promise.all(promises);
     console.log(`SDKPool initialized with ${this.instances.size} instances`);
   }
@@ -92,7 +96,7 @@ export class SDKPool {
           .digest("hex");
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10_000);
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
         try {
           const response = await fetch(config.webhook, {
@@ -117,8 +121,7 @@ export class SDKPool {
       })
     );
 
-    for (let i = 0; i < results.length; i++) {
-      const result = results[i];
+    for (const [i, result] of results.entries()) {
       if (result.status === "rejected") {
         console.error(
           `Webhook delivery error for ${serverUrl} → ${configs[i].webhook} [${event}]:`,
