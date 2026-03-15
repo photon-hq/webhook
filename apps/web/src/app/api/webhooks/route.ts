@@ -4,7 +4,7 @@ import { db, webhookConfigs } from "@turbobun/db";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-const SIGNING_SECRET_BYTE_LENGTH = 32;
+const SIGNING_SECRET_BYTE_LENGTH = 32 as const;
 
 function generateSigningSecret(): string {
   return randomBytes(SIGNING_SECRET_BYTE_LENGTH).toString("hex");
@@ -75,42 +75,52 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const result = await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({
-        id: webhookConfigs.id,
-        apiKey: webhookConfigs.apiKey,
-        signingSecret: webhookConfigs.signingSecret,
-      })
-      .from(webhookConfigs)
-      .where(
-        and(
-          eq(webhookConfigs.serverUrl, serverUrl),
-          eq(webhookConfigs.webhook, webhookUrl)
+  let result: { id: string; signingSecret: string; created: boolean };
+
+  try {
+    result = await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({
+          id: webhookConfigs.id,
+          apiKey: webhookConfigs.apiKey,
+          signingSecret: webhookConfigs.signingSecret,
+        })
+        .from(webhookConfigs)
+        .where(
+          and(
+            eq(webhookConfigs.serverUrl, serverUrl),
+            eq(webhookConfigs.webhook, webhookUrl)
+          )
         )
-      )
-      .limit(1)
-      .for("update");
+        .limit(1)
+        .for("update");
 
-    if (existing) {
-      if (existing.apiKey !== apiKey) {
-        const signingSecret = generateSigningSecret();
-        await tx
-          .update(webhookConfigs)
-          .set({ apiKey, signingSecret, updatedAt: new Date() })
-          .where(eq(webhookConfigs.id, existing.id));
-        return { id: existing.id, signingSecret, created: false };
+      if (existing) {
+        if (existing.apiKey !== apiKey) {
+          const signingSecret = generateSigningSecret();
+          await tx
+            .update(webhookConfigs)
+            .set({ apiKey, signingSecret, updatedAt: new Date() })
+            .where(eq(webhookConfigs.id, existing.id));
+          return { id: existing.id, signingSecret, created: false };
+        }
+        return { id: existing.id, signingSecret: existing.signingSecret, created: false };
       }
-      return { id: existing.id, signingSecret: existing.signingSecret, created: false };
-    }
 
-    const signingSecret = generateSigningSecret();
-    const [inserted] = await tx
-      .insert(webhookConfigs)
-      .values({ serverUrl, apiKey, webhook: webhookUrl, signingSecret })
-      .returning({ id: webhookConfigs.id });
-    return { id: inserted.id, signingSecret, created: true };
-  });
+      const signingSecret = generateSigningSecret();
+      const [inserted] = await tx
+        .insert(webhookConfigs)
+        .values({ serverUrl, apiKey, webhook: webhookUrl, signingSecret })
+        .returning({ id: webhookConfigs.id });
+      return { id: inserted.id, signingSecret, created: true };
+    });
+  } catch (error) {
+    console.error("Failed to upsert webhook config:", error);
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json(
     { id: result.id, signingSecret: result.signingSecret },
