@@ -115,6 +115,32 @@ export async function POST(request: Request): Promise<NextResponse> {
       return { id: inserted.id, signingSecret, created: true };
     });
   } catch (error) {
+    const isUniqueViolation =
+      error instanceof Error && "code" in error && (error as { code: string }).code === "23505";
+
+    if (isUniqueViolation) {
+      const [existing] = await db
+        .select({
+          id: webhookConfigs.id,
+          signingSecret: webhookConfigs.signingSecret,
+        })
+        .from(webhookConfigs)
+        .where(
+          and(
+            eq(webhookConfigs.serverUrl, serverUrl),
+            eq(webhookConfigs.webhook, webhookUrl)
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        return NextResponse.json({
+          id: existing.id,
+          signingSecret: existing.signingSecret,
+        });
+      }
+    }
+
     console.error("Failed to upsert webhook config:", error);
     return NextResponse.json(
       { error: "Internal server error." },
