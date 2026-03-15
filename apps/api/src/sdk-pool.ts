@@ -5,6 +5,8 @@ import {
 } from "@photon-ai/advanced-imessage-kit";
 import type { ConfigStore } from "./config-store.js";
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 const FORWARDED_EVENTS: PhotonEventName[] = [
   "new-message",
   "updated-message",
@@ -37,9 +39,13 @@ export class SDKPool {
   async initialize(store: ConfigStore): Promise<void> {
     this.store = store;
     const entries = [...store.entries()];
-    const promises = entries.map(([serverUrl, config]) =>
-      this.add(serverUrl, config.apiKey)
-    );
+    // One SDK connection per server — all webhooks for the same server share
+    // the connection, so we use the first config's apiKey to authenticate.
+    const promises = entries
+      .filter(([, configs]) => configs.length > 0)
+      .map(([serverUrl, configs]) =>
+        this.add(serverUrl, configs[0].apiKey)
+      );
     await Promise.all(promises);
     console.log(`SDKPool initialized with ${this.instances.size} instances`);
   }
@@ -74,40 +80,54 @@ export class SDKPool {
     event: PhotonEventName,
     data: unknown
   ): Promise<void> {
-    const config = this.store.get(serverUrl);
-    if (!config) {
+    const configs = this.store.getAll(serverUrl);
+    if (configs.length === 0) {
       return;
     }
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const body = JSON.stringify({ event, data });
-    const sigBase = `v0:${timestamp}:${body}`;
-    const signature = createHmac("sha256", config.signingSecret)
-      .update(sigBase)
-      .digest("hex");
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
+    const results = await Promise.allSettled(
+      configs.map(async (config) => {
+        const sigBase = `v0:${timestamp}:${body}`;
+        const signature = createHmac("sha256", config.signingSecret)
+          .update(sigBase)
+          .digest("hex");
 
-    try {
-      const response = await fetch(config.webhook, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Photon-Signature": `v0=${signature}`,
-          "X-Photon-Timestamp": timestamp,
-        },
-        body,
-        signal: controller.signal,
-      });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-      if (!response.ok) {
+        try {
+          const response = await fetch(config.webhook, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Photon-Signature": `v0=${signature}`,
+              "X-Photon-Timestamp": timestamp,
+            },
+            body,
+            signal: controller.signal,
+          });
+
+          if (!response.ok) {
+            console.error(
+              `Webhook delivery failed for ${serverUrl} → ${config.webhook} [${event}]: HTTP ${response.status}`
+            );
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      })
+    );
+
+    for (const [i, result] of results.entries()) {
+      if (result.status === "rejected") {
         console.error(
-          `Webhook delivery failed for ${serverUrl} [${event}]: HTTP ${response.status}`
+          `Webhook delivery error for ${serverUrl} → ${configs[i].webhook} [${event}]:`,
+          result.reason
         );
       }
-    } finally {
-      clearTimeout(timeout);
     }
   }
 
