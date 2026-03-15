@@ -181,17 +181,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const rows = await db
-    .select({
-      id: webhookConfigs.id,
-      serverUrl: webhookConfigs.serverUrl,
-      webhookUrl: webhookConfigs.webhook,
-      createdAt: webhookConfigs.createdAt,
-    })
-    .from(webhookConfigs)
-    .where(eq(webhookConfigs.serverUrl, serverUrl));
+  try {
+    const rows = await db
+      .select({
+        id: webhookConfigs.id,
+        serverUrl: webhookConfigs.serverUrl,
+        webhookUrl: webhookConfigs.webhook,
+        createdAt: webhookConfigs.createdAt,
+      })
+      .from(webhookConfigs)
+      .where(eq(webhookConfigs.serverUrl, serverUrl));
 
-  return NextResponse.json(rows);
+    return NextResponse.json(rows);
+  } catch (error) {
+    console.error("Failed to fetch webhook configs:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch webhook configs." },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
@@ -204,10 +212,18 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const deleted = await db
-    .delete(webhookConfigs)
-    .where(eq(webhookConfigs.serverUrl, serverUrl))
-    .returning({ id: webhookConfigs.id });
+  try {
+    const deleted = await db
+      .delete(webhookConfigs)
+      .where(eq(webhookConfigs.serverUrl, serverUrl))
+      .returning({ id: webhookConfigs.id });
 
-  return NextResponse.json({ deleted: deleted.length });
+    return NextResponse.json({ deleted: deleted.length });
+  } catch (error) {
+    console.error("Failed to delete webhook configs:", error);
+    return NextResponse.json(
+      { error: "Failed to delete webhook configs." },
+      { status: 500 }
+    );
+  }
 }
