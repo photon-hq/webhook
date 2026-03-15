@@ -69,30 +69,42 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const signingSecret = randomBytes(32).toString("hex");
-
   const existing = await db
-    .select({ id: webhookConfigs.id })
+    .select({
+      id: webhookConfigs.id,
+      apiKey: webhookConfigs.apiKey,
+      signingSecret: webhookConfigs.signingSecret,
+    })
     .from(webhookConfigs)
     .where(eq(webhookConfigs.serverUrl, serverUrl))
     .limit(1);
 
   if (existing.length > 0) {
-    await db
-      .update(webhookConfigs)
-      .set({
-        apiKey,
-        webhook: webhookUrl,
+    if (existing[0].apiKey !== apiKey) {
+      const signingSecret = randomBytes(32).toString("hex");
+      await db
+        .update(webhookConfigs)
+        .set({
+          apiKey,
+          webhook: webhookUrl,
+          signingSecret,
+          updatedAt: new Date(),
+        })
+        .where(eq(webhookConfigs.serverUrl, serverUrl));
+
+      return NextResponse.json({
+        id: existing[0].id,
         signingSecret,
-        updatedAt: new Date(),
-      })
-      .where(eq(webhookConfigs.serverUrl, serverUrl));
+      });
+    }
 
     return NextResponse.json({
       id: existing[0].id,
-      signingSecret,
+      signingSecret: existing[0].signingSecret,
     });
   }
+
+  const signingSecret = randomBytes(32).toString("hex");
 
   const [inserted] = await db
     .insert(webhookConfigs)
