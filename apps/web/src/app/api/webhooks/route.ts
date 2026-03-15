@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 import { db, webhookConfigs } from "@turbobun/db";
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const SIGNING_SECRET_BYTE_LENGTH = 32 as const;
 
@@ -169,4 +169,45 @@ export async function POST(request: Request): Promise<NextResponse> {
     { id: result.id, signingSecret: result.signingSecret },
     { status: result.created ? 201 : 200 }
   );
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const serverUrl = request.nextUrl.searchParams.get("serverUrl");
+
+  if (!serverUrl) {
+    return NextResponse.json(
+      { error: "serverUrl query parameter is required." },
+      { status: 400 }
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: webhookConfigs.id,
+      serverUrl: webhookConfigs.serverUrl,
+      webhookUrl: webhookConfigs.webhook,
+      createdAt: webhookConfigs.createdAt,
+    })
+    .from(webhookConfigs)
+    .where(eq(webhookConfigs.serverUrl, serverUrl));
+
+  return NextResponse.json(rows);
+}
+
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const serverUrl = request.nextUrl.searchParams.get("serverUrl");
+
+  if (!serverUrl) {
+    return NextResponse.json(
+      { error: "serverUrl query parameter is required." },
+      { status: 400 }
+    );
+  }
+
+  const deleted = await db
+    .delete(webhookConfigs)
+    .where(eq(webhookConfigs.serverUrl, serverUrl))
+    .returning({ id: webhookConfigs.id });
+
+  return NextResponse.json({ deleted: deleted.length });
 }

@@ -8,6 +8,7 @@ export const webhookConfigs = pgTable(
     signingSecret: text("signing_secret").notNull(),
     webhook: text("webhook").notNull(),
     apiKey: text("api_key").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (t) => [unique().on(t.serverUrl, t.webhook)]
