@@ -19,6 +19,32 @@ function isDbError(err: unknown): err is Error & { code: string } {
   );
 }
 
+async function verifyServerCredentials(
+  serverUrl: string,
+  apiKey: string
+): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const sdk = new AdvancedIMessageKit({
+      serverUrl,
+      apiKey,
+      logLevel: "error",
+    });
+
+    const cleanup = (result: boolean) => {
+      clearTimeout(timer);
+      sdk.close();
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => cleanup(false), 5000);
+
+    sdk.on("ready", () => cleanup(true));
+    sdk.on("error", () => cleanup(false));
+
+    sdk.connect().catch(() => cleanup(false));
+  });
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;
   try {
@@ -56,28 +82,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const verified = await new Promise<boolean>((resolve) => {
-    const sdk = new AdvancedIMessageKit({
-      serverUrl,
-      apiKey,
-      logLevel: "error",
-    });
-
-    const cleanup = (result: boolean) => {
-      clearTimeout(timer);
-      sdk.close();
-      resolve(result);
-    };
-
-    const timer = setTimeout(() => cleanup(false), 5000);
-
-    sdk.on("ready", () => cleanup(true));
-    sdk.on("error", () => cleanup(false));
-
-    sdk.connect().catch(() => cleanup(false));
-  });
-
-  if (!verified) {
+  if (!(await verifyServerCredentials(serverUrl, apiKey))) {
     return NextResponse.json(
       { error: "Invalid server URL or API key." },
       { status: 401 }
@@ -173,11 +178,19 @@ export async function POST(request: Request): Promise<NextResponse> {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const serverUrl = request.nextUrl.searchParams.get("serverUrl");
+  const apiKey = request.nextUrl.searchParams.get("apiKey");
 
-  if (!serverUrl) {
+  if (!serverUrl || !apiKey) {
     return NextResponse.json(
-      { error: "serverUrl query parameter is required." },
+      { error: "serverUrl and apiKey query parameters are required." },
       { status: 400 }
+    );
+  }
+
+  if (!(await verifyServerCredentials(serverUrl, apiKey))) {
+    return NextResponse.json(
+      { error: "Invalid server URL or API key." },
+      { status: 401 }
     );
   }
 
@@ -204,11 +217,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const serverUrl = request.nextUrl.searchParams.get("serverUrl");
+  const apiKey = request.nextUrl.searchParams.get("apiKey");
 
-  if (!serverUrl) {
+  if (!serverUrl || !apiKey) {
     return NextResponse.json(
-      { error: "serverUrl query parameter is required." },
+      { error: "serverUrl and apiKey query parameters are required." },
       { status: 400 }
+    );
+  }
+
+  if (!(await verifyServerCredentials(serverUrl, apiKey))) {
+    return NextResponse.json(
+      { error: "Invalid server URL or API key." },
+      { status: 401 }
     );
   }
 
