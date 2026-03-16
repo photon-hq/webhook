@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 
 const SIGNING_SECRET_BYTE_LENGTH = 32 as const;
+const VERIFY_TIMEOUT_MS = 5000;
 
 function generateSigningSecret(): string {
   return randomBytes(SIGNING_SECRET_BYTE_LENGTH).toString("hex");
@@ -36,7 +37,7 @@ async function verifyServerCredentials(
       resolve(result);
     };
 
-    const timer = setTimeout(() => cleanup(false), 5000);
+    const timer = setTimeout(() => cleanup(false), VERIFY_TIMEOUT_MS);
 
     sdk.on("ready", () => cleanup(true));
     sdk.on("error", () => cleanup(false));
@@ -178,11 +179,13 @@ export async function POST(request: Request): Promise<NextResponse> {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const serverUrl = request.nextUrl.searchParams.get("serverUrl");
-  const apiKey = request.nextUrl.searchParams.get("apiKey");
+  const apiKey =
+    request.headers.get("x-api-key") ??
+    request.nextUrl.searchParams.get("apiKey");
 
   if (!serverUrl || !apiKey) {
     return NextResponse.json(
-      { error: "serverUrl and apiKey query parameters are required." },
+      { error: "serverUrl and apiKey (header x-api-key or query param) are required." },
       { status: 400 }
     );
   }
@@ -217,11 +220,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const serverUrl = request.nextUrl.searchParams.get("serverUrl");
-  const apiKey = request.nextUrl.searchParams.get("apiKey");
+  const apiKey =
+    request.headers.get("x-api-key") ??
+    request.nextUrl.searchParams.get("apiKey");
 
   if (!serverUrl || !apiKey) {
     return NextResponse.json(
-      { error: "serverUrl and apiKey query parameters are required." },
+      { error: "serverUrl and apiKey (header x-api-key or query param) are required." },
       { status: 400 }
     );
   }
