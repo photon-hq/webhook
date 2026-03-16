@@ -31,9 +31,12 @@ async function verifyServerCredentials(
       logLevel: "error",
     });
 
+    let finished = false;
     const cleanup = (result: boolean) => {
+      if (finished) return;
+      finished = true;
       clearTimeout(timer);
-      sdk.close();
+      try { sdk.close(); } catch { /* already closed */ }
       resolve(result);
     };
 
