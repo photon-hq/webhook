@@ -61,22 +61,25 @@ export class SDKPool {
       return inflight;
     }
 
-    const connectPromise = (async () => {
-      try {
-        const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
-        await sdk.connect();
-        this.attachListeners(serverUrl, sdk);
-        this.instances.set(serverUrl, sdk);
-        console.log(`SDK connected: ${serverUrl}`);
-      } catch (error) {
-        console.error(`Failed to connect SDK for ${serverUrl}:`, error);
-      } finally {
-        this.connecting.delete(serverUrl);
-      }
-    })();
-
+    const connectPromise = this.doConnect(serverUrl, apiKey);
     this.connecting.set(serverUrl, connectPromise);
     return connectPromise;
+  }
+
+  private async doConnect(serverUrl: string, apiKey: string): Promise<void> {
+    // Yield so the caller can store this promise in `connecting` before work begins.
+    await Promise.resolve();
+    try {
+      const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
+      await sdk.connect();
+      this.attachListeners(serverUrl, sdk);
+      this.instances.set(serverUrl, sdk);
+      console.log(`SDK connected: ${serverUrl}`);
+    } catch (error) {
+      console.error(`Failed to connect SDK for ${serverUrl}:`, error);
+    } finally {
+      this.connecting.delete(serverUrl);
+    }
   }
 
   private attachListeners(serverUrl: string, sdk: AdvancedIMessageKit): void {
@@ -159,14 +162,23 @@ export class SDKPool {
       return;
     }
 
-    try {
-      await sdk.close();
-      console.log(`SDK closed: ${serverUrl}`);
-    } catch (error) {
-      console.error(`Error closing SDK for ${serverUrl}:`, error);
-    }
-
+    // Remove from instances first so concurrent add()/remove() calls
+    // won't see or double-close this SDK.
     this.instances.delete(serverUrl);
+
+    const closePromise = (async () => {
+      try {
+        await sdk.close();
+        console.log(`SDK closed: ${serverUrl}`);
+      } catch (error) {
+        console.error(`Error closing SDK for ${serverUrl}:`, error);
+      } finally {
+        this.connecting.delete(serverUrl);
+      }
+    })();
+
+    this.connecting.set(serverUrl, closePromise);
+    await closePromise;
   }
 
   async update(serverUrl: string, apiKey: string): Promise<void> {
