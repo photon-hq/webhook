@@ -149,6 +149,11 @@ export class SDKPool {
   }
 
   async remove(serverUrl: string): Promise<void> {
+    const inflight = this.connecting.get(serverUrl);
+    if (inflight) {
+      await inflight;
+    }
+
     const sdk = this.instances.get(serverUrl);
     if (!sdk) {
       return;
