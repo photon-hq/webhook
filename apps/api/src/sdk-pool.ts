@@ -51,6 +51,11 @@ export class SDKPool {
   }
 
   async add(serverUrl: string, apiKey: string): Promise<void> {
+    if (this.instances.has(serverUrl)) {
+      console.log(`SDK already connected for ${serverUrl}, skipping`);
+      return;
+    }
+
     try {
       const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
       await sdk.connect();

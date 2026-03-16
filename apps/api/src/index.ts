@@ -35,6 +35,8 @@ const setupRealtimeListener = async () => {
     EXECUTE FUNCTION notify_webhook_configs_changes();
   `);
 
+  let notificationQueue = Promise.resolve();
+
   client.on("notification", (msg) => {
     if (msg.channel !== CHANNEL || !msg.payload) {
       return;
@@ -95,9 +97,11 @@ const setupRealtimeListener = async () => {
       }
     };
 
-    handleNotification().catch((error) => {
-      console.error(`Error handling ${operation} for ${serverUrl}:`, error);
-    });
+    notificationQueue = notificationQueue
+      .then(handleNotification)
+      .catch((error) => {
+        console.error(`Error handling ${operation} for ${serverUrl}:`, error);
+      });
   });
 
   client.on("error", (err) => {
