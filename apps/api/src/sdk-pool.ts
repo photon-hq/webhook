@@ -34,6 +34,7 @@ const FORWARDED_EVENTS: PhotonEventName[] = [
 
 export class SDKPool {
   private readonly instances = new Map<string, AdvancedIMessageKit>();
+  private readonly connecting = new Map<string, Promise<void>>();
   private store!: ConfigStore;
 
   async initialize(store: ConfigStore): Promise<void> {
@@ -52,19 +53,30 @@ export class SDKPool {
 
   async add(serverUrl: string, apiKey: string): Promise<void> {
     if (this.instances.has(serverUrl)) {
-      console.log(`SDK already connected for ${serverUrl}, skipping`);
       return;
     }
 
-    try {
-      const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
-      await sdk.connect();
-      this.attachListeners(serverUrl, sdk);
-      this.instances.set(serverUrl, sdk);
-      console.log(`SDK connected: ${serverUrl}`);
-    } catch (error) {
-      console.error(`Failed to connect SDK for ${serverUrl}:`, error);
+    const inflight = this.connecting.get(serverUrl);
+    if (inflight) {
+      return inflight;
     }
+
+    const connectPromise = (async () => {
+      try {
+        const sdk = new AdvancedIMessageKit({ serverUrl, apiKey });
+        await sdk.connect();
+        this.attachListeners(serverUrl, sdk);
+        this.instances.set(serverUrl, sdk);
+        console.log(`SDK connected: ${serverUrl}`);
+      } catch (error) {
+        console.error(`Failed to connect SDK for ${serverUrl}:`, error);
+      } finally {
+        this.connecting.delete(serverUrl);
+      }
+    })();
+
+    this.connecting.set(serverUrl, connectPromise);
+    return connectPromise;
   }
 
   private attachListeners(serverUrl: string, sdk: AdvancedIMessageKit): void {
