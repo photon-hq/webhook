@@ -1,6 +1,7 @@
 import { db, webhookConfigs } from "@turbobun/db";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { createErrorResponse } from "../errors";
 
 export async function DELETE(
   _request: Request,
@@ -9,23 +10,28 @@ export async function DELETE(
   const { id } = await params;
 
   if (!id) {
-    return NextResponse.json(
-      { error: "Webhook ID is required." },
-      { status: 400 }
+    return createErrorResponse(
+      "WEBHOOK_ID_REQUIRED",
+      "Webhook ID is required."
     );
   }
 
-  const deleted = await db
-    .delete(webhookConfigs)
-    .where(eq(webhookConfigs.id, id))
-    .returning({ id: webhookConfigs.id });
+  try {
+    const deleted = await db
+      .delete(webhookConfigs)
+      .where(eq(webhookConfigs.id, id))
+      .returning({ id: webhookConfigs.id });
 
-  if (deleted.length === 0) {
-    return NextResponse.json(
-      { error: "Webhook not found." },
-      { status: 404 }
+    if (deleted.length === 0) {
+      return createErrorResponse("WEBHOOK_NOT_FOUND", "Webhook not found.");
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("Failed to delete webhook config:", error);
+    return createErrorResponse(
+      "DATABASE_ERROR",
+      "Failed to delete webhook config."
     );
   }
-
-  return new NextResponse(null, { status: 204 });
 }
