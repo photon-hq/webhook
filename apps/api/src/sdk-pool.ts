@@ -44,9 +44,7 @@ export class SDKPool {
     // the connection, so we use the first config's apiKey to authenticate.
     const promises = entries
       .filter(([, configs]) => configs.length > 0)
-      .map(([serverUrl, configs]) =>
-        this.add(serverUrl, configs[0].apiKey)
-      );
+      .map(([serverUrl, configs]) => this.add(serverUrl, configs[0].apiKey));
     await Promise.all(promises);
     console.log(`SDKPool initialized with ${this.instances.size} instances`);
   }
@@ -83,6 +81,12 @@ export class SDKPool {
   }
 
   private attachListeners(serverUrl: string, sdk: AdvancedIMessageKit): void {
+    // EventEmitter "error" events with no listener crash the process.
+    // A revoked/invalid apiKey on one server would otherwise take down the whole pool.
+    sdk.on("error", (error: Error) => {
+      console.error(`SDK error for ${serverUrl}:`, error.message);
+    });
+
     for (const event of FORWARDED_EVENTS) {
       sdk.on(event, (data) => {
         this.forwardEvent(serverUrl, event, data).catch((error) => {
@@ -116,7 +120,10 @@ export class SDKPool {
           .digest("hex");
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const timeout = setTimeout(
+          () => controller.abort(),
+          REQUEST_TIMEOUT_MS
+        );
 
         try {
           const response = await fetch(config.webhook, {

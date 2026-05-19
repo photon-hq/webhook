@@ -70,9 +70,9 @@ const setupRealtimeListener = async () => {
           break;
         }
         case "UPDATE": {
-          const before = store.getAll(serverUrl).find(
-            (c) => c.webhook === webhook
-          );
+          const before = store
+            .getAll(serverUrl)
+            .find((c) => c.webhook === webhook);
           store.add(serverUrl, { apiKey, signingSecret, webhook });
 
           if (before?.apiKey !== apiKey) {
